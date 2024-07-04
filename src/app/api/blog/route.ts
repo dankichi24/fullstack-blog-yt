@@ -11,7 +11,7 @@ export async function main() {
   }
 }
 
-// 全記事取得API
+// ブログの全記事取得API
 export const GET = async (req: Request, res: NextResponse) => {
   try {
     await main();
@@ -24,7 +24,7 @@ export const GET = async (req: Request, res: NextResponse) => {
   }
 };
 
-// ブログ投稿用API
+// ブログの投稿用API
 export const POST = async (req: Request, res: NextResponse) => {
   try {
     const { title, description } = await req.json();
