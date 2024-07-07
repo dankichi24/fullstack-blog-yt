@@ -1,33 +1,43 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef } from "react";
-import { toast, Toaster } from "react-hot-toast";
+import React, { Fragment, useEffect, useRef } from "react";
+import { Toaster, toast } from "react-hot-toast";
 
-const editBlog = async (
-  title: string | undefined,
-  description: string | undefined,
-  id: number
-) => {
-  const res = await fetch(`http://localhost:3000/api/blog/${id}`, {
+type UpdateBlogParams = {
+  title: string;
+  description: string;
+  id: string;
+};
+
+const updateBlog = async (data: UpdateBlogParams) => {
+  const res = fetch(`http://localhost:3000/api/blog/${data.id}`, {
     method: "PUT",
+    body: JSON.stringify({ title: data.title, description: data.description }),
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title, description, id }),
   });
-
-  return res.json();
+  return (await res).json();
 };
 
-const getBlogByID = async (id: number) => {
+const getBlogById = async (id: number) => {
   const res = await fetch(`http://localhost:3000/api/blog/${id}`);
   const data = await res.json();
-  console.log(data);
-  return data.post();
+  return data.post;
 };
 
-const EditPost = ({ params }: { params: { id: number } }) => {
+const deleteBlog = async (id: number) => {
+  const res = fetch(`http://localhost:3000/api/blog/${id}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return (await res).json();
+};
+
+const EditBlog = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const titleRef = useRef<HTMLInputElement | null>(null);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
@@ -35,27 +45,40 @@ const EditPost = ({ params }: { params: { id: number } }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    toast.loading("編集中でございます...", { id: "1" });
-    await editBlog(
-      titleRef.current?.value,
-      descriptionRef.current?.value,
-      params.id
-    );
+    if (titleRef.current && descriptionRef.current) {
+      toast.loading("Sending Request 🚀", { id: "1" });
 
-    toast.success("編集成功したよ！", { id: "1" });
+      await updateBlog({
+        title: titleRef.current?.value,
+        description: descriptionRef.current?.value,
+        id: params.id,
+      });
 
-    router.push("/");
-    router.refresh();
+      toast.success("Blog Posted Successfully", { id: "1" });
+
+      router.push("/");
+      router.refresh();
+    }
+  };
+
+  const handleDelete = async () => {
+    toast.loading("Deleting Blog", { id: "2" });
+    await deleteBlog(parseInt(params.id));
   };
 
   useEffect(() => {
-    getBlogByID(params.id)
+    toast.loading("Fetching Blog Details 🚀", { id: "1" });
+    getBlogById(parseInt(params.id))
       .then((data) => {
-        titleRef.current!.value = data.title;
-        descriptionRef.current!.value = data.description;
+        if (titleRef.current && descriptionRef.current) {
+          titleRef.current.value = data.title;
+          descriptionRef.current.value = data.description;
+          toast.success("Fetching Completed", { id: "1" });
+        }
       })
       .catch((err) => {
-        toast.error("エラーが発生しました。", { id: "1" });
+        console.log(err);
+        toast.error("Error Fetching Blog", { id: "1" });
       });
   }, []);
 
@@ -82,7 +105,10 @@ const EditPost = ({ params }: { params: { id: number } }) => {
             <button className="font-semibold px-4 py-2 shadow-xl bg-blue-400 rounded-lg m-auto hover:bg-blue-200">
               更新
             </button>
-            <button className="ml-2 font-semibold px-4 py-2 shadow-xl bg-red-400 rounded-lg m-auto hover:bg-slate-100">
+            <button
+              onClick={handleDelete}
+              className="ml-2 font-semibold px-4 py-2 shadow-xl bg-red-400 rounded-lg m-auto hover:bg-slate-100"
+            >
               削除
             </button>
           </form>
@@ -92,4 +118,4 @@ const EditPost = ({ params }: { params: { id: number } }) => {
   );
 };
 
-export default EditPost;
+export default EditBlog;
