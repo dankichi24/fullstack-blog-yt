@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useRef } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 
 const postBlog = async (
   title: string | undefined,
@@ -28,7 +28,10 @@ const PostBlog = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    toast.loading("投稿中でございます...", { id: "1" });
     await postBlog(titleRef.current?.value, descriptionRef.current?.value);
+
+    toast.success("投稿成功したよ！", { id: "1" });
 
     router.push("/");
     router.refresh();
